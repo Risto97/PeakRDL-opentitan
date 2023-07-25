@@ -1,0 +1,127 @@
+addrmap i2s {
+    reg {
+        desc = "control register";
+        field {
+            desc = "Enable I2s - CLK Domain";
+            sw = rw;
+        } EN[0:0];
+        field {
+            desc = "Enable word select generation";
+            sw = rw;
+        } EN_WS[1:1];
+        field {
+            enum EN_RX_e {
+                DISABLED = 0 {
+                    desc = "Disable I2s";
+                };
+                ONLY_LEFT = 1 {
+                    desc = "Enable left channel";
+                };
+                ONLY_RIGHT = 2 {
+                    desc = "Enable right channel";
+                };
+                BOTH_CHANNELS = 3 {
+                    desc = "Enable both channels";
+                };
+            } ;
+            desc = "Enable rx channels";
+            sw = rw;
+            encode = EN_RX_e;
+        } EN_RX[3:2] = 0x0;
+        field {
+            desc = "enable watermark interrupt";
+            sw = rw;
+        } INTR_EN[4:4];
+        field {
+            desc = "en watermark counter";
+            sw = rw;
+        } EN_WATERMARK[5:5];
+        field {
+            desc = "reset watermark counter";
+            sw = rw;
+        } RESET_WATERMARK[6:6];
+        field {
+            desc = "connects the peripheral to the IOs";
+            sw = rw;
+        } EN_IO[7:7];
+        field {
+            enum DATA_WIDTH_e {
+                _8_BITS = 0 {
+                    desc = "8 bits";
+                };
+                _16_BITS = 1 {
+                    desc = "16 bits";
+                };
+                _24_BITS = 2 {
+                    desc = "24 bits";
+                };
+                _32_BITS = 3 {
+                    desc = "32 bits";
+                };
+            } ;
+            desc = "Bytes per sample";
+            sw = rw;
+            encode = DATA_WIDTH_e;
+        } DATA_WIDTH[9:8] = 0x3;
+        field {
+            enum RX_START_CHANNEL_e {
+                LEFT_FIRST = 0 {
+                    desc = "Start left channel first (default for WAVE)";
+                };
+                RIGHT_FIRST = 1 {
+                    desc = "Start right channel first";
+                };
+            } ;
+            desc = "Channel (left/right) of first sample - alternating afterwards.";
+            sw = rw;
+            encode = RX_START_CHANNEL_e;
+        } RX_START_CHANNEL[10:10] = 0x0;
+        field {
+            desc = "reset rx overflow";
+            sw = rw;
+        } RESET_RX_OVERFLOW[11:11];
+    } CONTROL @ 0x0;
+    reg {
+        desc = "Status flags of the I2s peripheral";
+        field {
+            desc = "1 to indicate that SCK is on";
+            sw = r;
+        } RUNNING[0:0];
+        field {
+            desc = "1 to indicate that an RX sample is ready";
+            sw = r;
+        } RX_DATA_READY[1:1];
+        field {
+            desc = "1 to indicate that an RX happend - disable rx_channel to clear";
+            sw = r;
+        } RX_OVERFLOW[2:2];
+    } STATUS @ 0x4;
+    reg {
+        desc = "Control register";
+        field {
+            desc = "Index at which clock divide.";
+            sw = rw;
+        } COUNT[15:0];
+    } CLKDIVIDX @ 0x8;
+    reg {
+        desc = "I2s Receive data";
+        field {
+            desc = "latest rx data if DATA_READY flag is set";
+            sw = r;
+        } RXDATA[31:0];
+    } RXDATA @ 0xC;
+    reg {
+        desc = "Watermark to reach for an interrupt";
+        field {
+            desc = "Count of RX samples written to memory which should trigger an interrupt";
+            sw = rw;
+        } Watermark[15:0];
+    } WATERMARK @ 0x10;
+    reg {
+        desc = "Watermark counter level";
+        field {
+            desc = "Count of RX samples";
+            sw = r;
+        } Waterlevel[15:0];
+    } WATERLEVEL @ 0x14;
+};

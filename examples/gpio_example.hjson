@@ -43,6 +43,12 @@
       desc: "GPIO inout to/from PAD"
     }
   ],
+  available_output_list: [
+    { name: "gpio_out",
+      width: 15,
+      desc: "GPIO out to/from PAD"
+    }
+  ],
   interrupt_list: [
     { name: "gpio",
       width: 32,
@@ -83,7 +89,10 @@
       tags: [// data_in is ro register, so exclude its readback check
              "excl:CsrNonInitTests:CsrExclWriteCheck"],
       fields: [
-        { bits: "31:0",
+        { bits: "15:0",
+          resval: "x"
+        },
+        { bits: "31:16",
           resval: "x"
         }
       ],
@@ -131,7 +140,7 @@
 
                 A value of 1 in mask[i] allows the updating of DATA_OUT[i], 0 <= i <= 15
                 '''
-          swaccess: "wo"
+          swaccess: "r0w1c"
         },
       ],
     },
@@ -324,4 +333,3 @@
     },
   ],
 }
-

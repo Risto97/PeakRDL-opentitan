@@ -32,9 +32,9 @@ setuptools.setup(
         "peakrdl.exporters": [
             'opentitan = peakrdl_opentitan.__peakrdl__:Exporter'
         ],
-        # "peakrdl.importers": [
-        #     'ip-xact = peakrdl_opentitan.__peakrdl__:Importer'
-        # ]
+        "peakrdl.importers": [
+            'ip-xact = peakrdl_opentitan.__peakrdl__:Importer'
+        ]
     },
     classifiers=(
         "Development Status :: 5 - Production/Stable",

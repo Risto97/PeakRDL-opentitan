@@ -1,0 +1,134 @@
+addrmap dma {
+    reg {
+        desc = "Input data pointer (word aligned)";
+        field {
+            desc = "Input data pointer (word aligned)";
+            sw = rw;
+        } PTR_IN[31:0] = 0x0;
+    } SRC_PTR @ 0x0;
+    reg {
+        desc = "Output data pointer (word aligned)";
+        field {
+            desc = "Output data pointer (word aligned)";
+            sw = rw;
+        } PTR_OUT[31:0] = 0x0;
+    } DST_PTR @ 0x4;
+    reg {
+        desc = "Addess data pointer (word aligned)";
+        field {
+            desc = "Address data pointer (word aligned) - used only in Address mode";
+            sw = rw;
+        } PTR_ADDR[31:0] = 0x0;
+    } ADDR_PTR @ 0x8;
+    reg {
+        desc = "Number of bytes to copy - Once a value is written, the copy starts";
+        field {
+            desc = "DMA counter and start";
+            sw = rw;
+        } SIZE[31:0] = 0x0;
+    } SIZE @ 0xC;
+    reg {
+        desc = "Status bits are set to one if a given event occurred";
+        field {
+            desc = "Transaction iss done";
+            sw = r;
+        } READY[0:0] = 0x1;
+        field {
+            desc = "set if DMA is copying second half";
+            sw = r;
+        } WINDOW_DONE[1:1] = 0x0;
+    } STATUS @ 0x10;
+    reg {
+        desc = "Increment number of src/dst pointer every time a word is copied";
+        field {
+            desc = "Source pointer increment";
+            sw = rw;
+        } SRC_PTR_INC[7:0];
+        field {
+            desc = "Destination pointer increment";
+            sw = rw;
+        } DST_PTR_INC[15:8];
+    } PTR_INC @ 0x14;
+    reg {
+        desc = "The DMA will wait for the signal 
+        connected to the selected trigger_slots to be high
+        on the read and write side respectivly";
+        field {
+            desc = "Slot selection mask";
+            sw = rw;
+        } RX_TRIGGER_SLOT[15:0] = 0x0;
+        field {
+            desc = "Slot selection mask";
+            sw = rw;
+        } TX_TRIGGER_SLOT[31:16] = 0x0;
+    } SLOT @ 0x18;
+    reg {
+        desc = "Width/type of the data to transfer";
+        field {
+            enum DATA_TYPE_e {
+                DMA_32BIT_WORD = 0 {
+                    desc = "Transfers 32 bits";
+                };
+                DMA_16BIT_WORD = 1 {
+                    desc = "Transfers 16 bits";
+                };
+                DMA_8BIT_WORD = 2 {
+                    desc = "Transfers  8 bits";
+                };
+                DMA_8BIT_WORD_2 = 3 {
+                    desc = "Transfers  8 bits";
+                };
+            } ;
+            desc = "Data type";
+            sw = rw;
+            encode = DATA_TYPE_e;
+        } DATA_TYPE[1:0] = 0x0;
+    } DATA_TYPE @ 0x1C;
+    reg {
+        desc = "Set the operational mode of the DMA";
+        field {
+            enum MODE_e {
+                LINEAR_MODE = 0 {
+                    desc = "Transfers data linearly";
+                };
+                CIRCULAR_MODE = 1 {
+                    desc = "Transfers data in circular mode";
+                };
+                ADDRESS_MODE = 2 {
+                    desc = "Transfers data using as destination address the data from ADD_PTR";
+                };
+            } ;
+            desc = "DMA operation mode";
+            sw = rw;
+            encode = MODE_e;
+        } MODE[1:0] = 0x0;
+    } MODE @ 0x20;
+    reg {
+        desc = "Will trigger a every \"WINDOW_SIZE\" writes
+        Set to 0 to disable.";
+        field {
+            desc = "";
+            sw = rw;
+        } WINDOW_SIZE[31:0] = 0x0;
+    } WINDOW_SIZE @ 0x24;
+    reg {
+        desc = "Number of times the end of the window was reached since the beginning.
+        Reset at start";
+        field {
+            desc = "Number of windows transferred in the transaction";
+            sw = r;
+        } WINDOW_COUNT[31:0] = 0x0;
+    } WINDOW_COUNT @ 0x28;
+    reg {
+        desc = "Interrupt Enable Register 
+        (Only the interrupt with the lowest id will be triggered)";
+        field {
+            desc = "Enables transaction done interrupt";
+            sw = rw;
+        } TRANSACTION_DONE[0:0] = 0x0;
+        field {
+            desc = "Enables window done interrupt";
+            sw = rw;
+        } WINDOW_DONE[1:1] = 0x0;
+    } INTERRUPT_EN @ 0x2C;
+};

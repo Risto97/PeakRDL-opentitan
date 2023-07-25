@@ -1,0 +1,27 @@
+addrmap fast_intr_ctrl {
+    reg {
+        desc = "Pending fast interrupt";
+        field {
+            desc = "Pending Fast Interrupt Reg";
+            sw = r;
+        } FAST_INTR_PENDING[14:0] = 0x0;
+    } FAST_INTR_PENDING @ 0x0;
+    reg {
+        desc = "Clear fast interrupt";
+        field {
+            desc = "Clear Fast Interrupt";
+            sw = rw;
+        } FAST_INTR_CLEAR[14:0] = 0x0;
+    } FAST_INTR_CLEAR @ 0x4;
+    reg {
+        desc = "Enable fast interrupt";
+        field {
+            desc = "Enable fast interrupt";
+            sw = rw;
+        } First[6:0] = 0x0;
+        field {
+            desc = "Enable fast interrupt";
+            sw = rw;
+        } Second[14:7] = 0xFF;
+    } FAST_INTR_ENABLE @ 0x8;
+};
