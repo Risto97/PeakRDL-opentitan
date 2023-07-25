@@ -1,0 +1,76 @@
+enum SignalType {
+    output   = 0;
+    input    = 1;
+    inout    = 2;
+    tri      = 3;
+    clk      = 4;
+    rst      = 5;
+    wire     = 6;
+    blank    = 7;
+};
+
+property signal_type {
+    type = SignalType;
+    component = signal;
+};
+
+signal clk { 
+    signalwidth=1; 
+    desc = "Input clock";
+    signal_type = SignalType::clk;
+    };
+
+signal rstn { 
+    signalwidth=1; 
+    desc = "Input reset, active low";
+    activelow = true;
+    signal_type = SignalType::rst;
+    };
+
+signal rst { 
+    signalwidth=1; 
+    desc = "Input reset, active high";
+    activehigh = true;
+    signal_type = SignalType::rst;
+    };
+
+addrmap gpio { // name
+
+    name = "General-Purpose I/O Controller"; // name -> human_name
+    desc = "General-purpose I/O pin control interface for software"; // one_paragraph_desc
+
+    default regwidth = 32; // regwidth
+
+    // registers list []
+    reg {
+        name = "DATA_IN"; //  name
+        desc = "GPIO Input data read value"; // desc
+
+        // fields
+        field {
+            sw=r; hw=w;
+            onread=rclr;
+        } val[32] = 32'h00000000;
+
+    } DATA_IN;
+
+    external reg { // External -> hwext ??
+        name = "DIRECT_OUT";
+        desc = "GPIO direct output data write value";
+
+        field {
+            sw=rw; hw=rw;
+        } val[32] = 32'h00000000;
+
+    } DIRECT_OUT;
+
+
+    clk clk_i;
+    rstn rst_ni;
+
+    signal {signal_type=SignalType::output; signalwidth=32;} out_sig;
+    signal {signal_type=SignalType::input; signalwidth=16;} in_sig;
+    signal {signal_type=SignalType::input; signalwidth=17;} in_sig2;
+    signal {signal_type=SignalType::inout; signalwidth=32;} inout_sig;
+};
+

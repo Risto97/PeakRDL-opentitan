@@ -1,0 +1,5 @@
+hwaccess,Desc,hw
+none,No access,na
+hro,Read Only,r
+hrw,Read/Write,rw
+hwo,Write Only,w

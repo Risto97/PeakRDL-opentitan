@@ -1,0 +1,10 @@
+OT SW,Desc,RDL sw,RDL onwrite,RDL onread,Comment
+none,No access,na,,,
+ro,Read Only,r,,,
+rc,"Read Only, reading clears",r,,rclr,
+rw,Read/Write,rw,,,
+r0w1c,"Read zero, Write with 1 clears",rw,woclr,,Read zero does not map to RDL
+rw1s,"Read, Write with 1 sets",rw,woset,,
+rw1c,"Read, Write with 1 clears",rw,woset,,
+rw0c,"Read, Write with 0 clears",rw,wzc,,
+wo,Write Only,w,,,
