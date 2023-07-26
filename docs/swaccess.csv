@@ -1,5 +1,5 @@
 OT SW,Desc,RDL sw,RDL onwrite,RDL onread,Comment
-none,No access,na,,,
+none,No access,na,,,Invalid in SystemRDL
 ro,Read Only,r,,,
 rc,"Read Only, reading clears",r,,rclr,
 rw,Read/Write,rw,,,
