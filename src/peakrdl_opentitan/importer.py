@@ -1,5 +1,6 @@
 from typing import Optional, List, Dict, Any, Type, Union, Set
 import re
+import os
 
 import hjson
 
@@ -64,9 +65,6 @@ class OpenTitanImporter(RDLImporter):
                         "life_stage",
                         "commit_id",
                         "alert_list",
-                        "available_inout_list",
-                        "available_input_list",
-                        "available_output_list",
                         "expose_reg_if",
                         "interrupt_list",
                         "inter_signal_list",
@@ -155,22 +153,56 @@ class OpenTitanImporter(RDLImporter):
         """
         return self._create_definition(comp.Signal, type_name, src_ref)
 
+    def instantiate_signal(self, comp_def: comp.Signal, inst_name: str, src_ref: Optional[SourceRefBase] = None) -> comp.Signal:
+        """
+        Parameters
+        ----------
+        comp_def: :class:`comp.Signal`
+        inst_name: str
+        src_ref: :class:`~SourceRefBase`
+
+        Returns
+        -------
+        :class:`~comp.Signal`
+            Component instance
+        """
+        assert isinstance(comp_def, comp.Signal)
+        return self._instantiate(comp_def, inst_name, src_ref)
+
     def add_signals(self, node : Addrmap, tree: Dict): # TODO FINISH
 
         for sig_type in ['input', 'output', 'inout']:
             list_type = f'available_{sig_type}_list'
             if list_type in tree:
                 for s in tree[list_type]:
-                    self.create_signal_definition(s['name'])
+                    S = self.create_signal(s, sig_type)
+                    self.add_child(node, S)
 
+    def create_signal(self, sig_dict : Dict, sig_type : str):
+        print(sig_dict)
+        S = self.instantiate_signal(
+                comp_def=self.create_signal_definition(sig_dict['name']),
+                inst_name=sig_dict['name'],
+                )
 
-    def add_registers(self, node : Addrmap, tree: Dict): # TODO FINISH
+        self.assign_property(S, "desc", sig_dict['desc'])
 
+        width = int(sig_dict['width']) if 'width' in sig_dict else 1
+        self.assign_property(S, "signalwidth", width)
+
+        if self.compiler.env.property_rules.lookup_property("signal_type") is None:
+            props_path = os.path.join(os.path.dirname(__file__), "sig_props.rdl")
+            self.compiler.compile_file(props_path)
+
+        sig_type_enum = self.compiler.eval(f"SignalType::{sig_type}")
+        self.assign_property(S, "signal_type", sig_type_enum)
+
+        return S
+
+    def add_registers(self, node : Addrmap, tree: Dict):
         for reg in tree['registers']:
             R = self.create_register(reg)
             self.add_child(node, R)
-
-        pass
 
     def create_register(self, reg_dict: Dict) -> comp.Reg:
         for prop in OpenTitanImporter.unsupported_reg_props:
@@ -201,68 +233,60 @@ class OpenTitanImporter(RDLImporter):
                    reg_resval       : int        = 0,
                    ):
 
-        for field in reg_dict['fields']:
-            F = self.create_field(field, default_swaccess, default_hwaccess, reg_resval)
+        for cnt, field_dict in enumerate(reg_dict['fields']):
+
+            for prop in OpenTitanImporter.unsupported_field_props:
+                self.warn_unsupported(prop, field_dict)
+
+            if 'name' in field_dict:
+                name = field_dict['name']
+            else:
+                name =  f"val{cnt}"  # TODO default name
+
+            bits = [int(part) for part in field_dict['bits'].split(':')]
+            if len(bits) == 2:
+                bit_offset = bits[1]
+                bit_width = (bits[0] - bits[1]) + 1
+            elif len(bits) == 1:
+                bit_offset = bits[0]
+                bit_width = 1
+            else:
+                assert False
+
+            F = self.instantiate_field(
+                    comp_def=self.create_field_definition(name),
+                    inst_name=name,
+                    bit_offset=bit_offset,
+                    bit_width=bit_width,
+                    )
+
+            val = self.assign_property(F, 'desc', field_dict['desc']) if 'desc' in field_dict else None
+
+            swaccess = field_dict['swaccess'] if 'swaccess' in field_dict else default_swaccess
+            hwaccess = field_dict['hwaccess'] if 'hwaccess' in field_dict else default_hwaccess
+
+            sw, onwrite, onread = sw_from_access(swaccess)
+
+            self.assign_property(F, "sw", sw)
+            val = self.assign_property(F, "onwrite", onwrite) if onwrite is not None else None
+            val = self.assign_property(F, "onread", onread) if onread is not None else None
+
+            if 'resval' in field_dict:
+                resval = field_dict['resval']
+                if resval == 'x':
+                    self.msg.warning(f"Unsupported resval value: {resval}, using 0 instead")
+                    resval = 0
+                resval = self.hex_or_dec_to_dec(resval)
+            else:
+                resval = (reg_resval & ((2**bit_width-1) << bit_offset)) >> bit_offset
+
+                self.assign_property(F, "reset", resval)
+
+            if 'enum' in field_dict:
+                enum = self.parse_enum(field_dict)
+                self.assign_property(F, "encode", enum)
+
             self.add_child(reg, F)
-
-    def create_field(self,
-                   field_dict: Dict,
-                   default_swaccess : "str|None" = None,
-                   default_hwaccess : "str|None" = None,
-                   reg_resval       : int        = 0,
-                   ):
-        for prop in OpenTitanImporter.unsupported_field_props:
-            self.warn_unsupported(prop, field_dict)
-
-        if 'name' in field_dict:
-            name = field_dict['name']
-        else:
-            name =  "val"  # TODO default name
-
-        bits = [int(part) for part in field_dict['bits'].split(':')]
-        if len(bits) == 2:
-            bit_offset = bits[1]
-            bit_width = (bits[0] - bits[1]) + 1
-        elif len(bits) == 1:
-            bit_offset = bits[0]
-            bit_width = 1
-        else:
-            assert False
-
-        F = self.instantiate_field(
-                comp_def=self.create_field_definition(name),
-                inst_name=name,
-                bit_offset=bit_offset,
-                bit_width=bit_width,
-                )
-
-        val = self.assign_property(F, 'desc', field_dict['desc']) if 'desc' in field_dict else None
-
-        swaccess = field_dict['swaccess'] if 'swaccess' in field_dict else default_swaccess
-        hwaccess = field_dict['hwaccess'] if 'hwaccess' in field_dict else default_hwaccess
-
-        sw, onwrite, onread = sw_from_access(swaccess)
-
-        self.assign_property(F, "sw", sw)
-        val = self.assign_property(F, "onwrite", onwrite) if onwrite is not None else None
-        val = self.assign_property(F, "onread", onread) if onread is not None else None
-
-        if 'resval' in field_dict:
-            resval = field_dict['resval']
-            if resval == 'x':
-                self.msg.warning(f"Unsupported resval value: {resval}, using 0 instead")
-                resval = 0
-            resval = self.hex_or_dec_to_dec(resval)
-        else:
-            resval = (reg_resval & ((2**bit_width-1) << bit_offset)) >> bit_offset
-
-            self.assign_property(F, "reset", resval)
-
-        if 'enum' in field_dict:
-            enum = self.parse_enum(field_dict)
-            self.assign_property(F, "encode", enum)
-
-        return F
 
     def parse_enum(self, field_dict: Dict) -> Type[rdltypes.UserEnum]:
 
