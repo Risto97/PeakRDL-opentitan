@@ -1,3 +1,6 @@
+.. image:: graphics/banner.png
+  :alt: Banner image
+
 Introduction
 ============
 
